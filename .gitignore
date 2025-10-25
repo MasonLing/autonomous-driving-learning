@@ -1,0 +1,21 @@
+# VS Code
+.vscode/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+
+# Compiled files
+*.exe
+*.o
+*.out
+*.obj
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
