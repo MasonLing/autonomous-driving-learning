@@ -16,6 +16,43 @@ namespace Planning
             "pnc_map_server",
             std::bind(&PNCMapServer::response_pnc_map_callback, this, _1, _2));
     }
+    // // 响应并发布地图
+    // void PNCMapServer::response_pnc_map_callback(
+    //     const std::shared_ptr<PNCMapService::Request> request,
+    //     const std::shared_ptr<PNCMapService::Response> respons)
+    // {
+    //     // 添加调试信息，查看实际收到的值
+    //     RCLCPP_INFO(this->get_logger(), "Received map_type: %d", request->map_type);
+
+    //     // 接受请求，多态
+    //     switch (request->map_type)
+    //     {
+    //         case 0: // PNCMapType::STRAIGHT
+    //         map_creator_ = std::make_shared<PNCMapCreatorStraight>();
+    //         RCLCPP_INFO(this->get_logger(), "Creating STRAIGHT map");
+    //         break;
+    //         case 1: // PNCMapType::STURN
+    //         map_creator_ = std::make_shared<PNCMapCreatorSTurn>();
+    //         RCLCPP_INFO(this->get_logger(), "Creating STURN map");
+    //         break;
+    //         default:
+    //         RCLCPP_WARN(this->get_logger(), "Invalid map type: %d (expected 0 for STRAIGHT or 1 for STURN)", request->map_type);
+    //         return;
+    //     }
+
+    //     // 创建并响应地图
+    //     const auto pnc_map = map_creator_->creat_pnc_map();
+    //     respons->pnc_map = pnc_map;
+
+    //     // 发布地图，planning node用
+    //     map_pub_->publish(pnc_map);
+    //     RCLCPP_INFO(this->get_logger(), "pnc_map published");
+
+    //     // 发布用于rviz显示的地图
+    //     const auto pnc_map_markerarray = map_creator_->pnc_map_markerarray();
+    //     map_rviz_pub_->publish(pnc_map_markerarray);
+    //     RCLCPP_INFO(this->get_logger(), "pnc_map for rviz published");
+// }
     // 响应并发布地图
     void PNCMapServer::response_pnc_map_callback(const std::shared_ptr<PNCMapService::Request> request,
                                                  const std::shared_ptr<PNCMapService::Response> respons)

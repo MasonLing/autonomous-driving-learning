@@ -13,7 +13,7 @@ namespace Planning
 
         //创建地图服务器和全局路径客户端
         map_client_ = this->create_client<PNCMapService>("pnc_map_server");
-        global_path_client_ = this->create_client<GlobalPathService>("pnc_map_server");
+        global_path_client_ = this->create_client<GlobalPathService>("global_path_server");
     }
 
     bool PlanningProcess::process()//总流程
@@ -70,48 +70,57 @@ namespace Planning
         return true;
     }
 
-    template <typename T>
-    bool connect_server(const T &client)//连接服务器
+    bool PlanningProcess::map_request()//发送地图请求
     {
-        //判断客户类型
-        std::string server_name;
-        if constexpr (std::is_same_v<T, rclcpp::Client<PNCMapService>::SharedPtr>)//C++17引入的
+        RCLCPP_INFO(this->get_logger(),"Sending map request/");
+
+        //生成请求
+        auto request = std::make_shared<PNCMapService::Request>();
+        request->map_type = process_config_->pnc_map().type_;
+
+        //获取响应
+        auto result_future = map_client_->async_send_request(request);
+
+        // 判断响应是否成功
+        if(rclcpp::spin_until_future_complete(this->get_node_base_interface(), result_future) == rclcpp::FutureReturnCode::SUCCESS)
         {
-            server_name = "pnc_map";
-        }
-        else if constexpr (std::is_same_v<T, rclcpp::l<GlobalPathService>::SharedPtr>)//C++17引入的
-        {
-            server_name = "global_path";
+            RCLCPP_INFO(this->get_logger(),"Map response sucess");
+            pnc_map_ = result_future.get()->pnc_map;//获取响应中的pnc_map
+            return true;
         }
         else
         {
-            RCLCPP_ERROR(this->get_logger(), "wrong client type!");
-            return false; 
+            RCLCPP_ERROR(this->get_logger(),"Map response failed!");
+            return false;
         }
-        
-        //等待服务器
-        while (!client->wait_for_service(1s)) {
-            if (!rclcpp::ok()) //对ctrl+c操作处理 防止进入死循环
-            {
-                RCLCPP_ERROR(this->get_logger(), "Interruped while waiting for the %s server.", server_name.c_str());
-                return false;
-            }
-            RCLCPP_INFO(this->get_logger(), "%s server not available, waiting again...",server_name.c_str());
-        }
-
-        return true;
-    }
-    
-
-    bool PlanningProcess::map_request()//发送地图请求
-    {
-        return false;
     }
 
     bool PlanningProcess::global_path_request()//发送全局路径请求
     {
-        return false;
+        RCLCPP_INFO(this->get_logger(),"Sending global_path request/");
+
+        //生成请求
+        auto request = std::make_shared<GlobalPathService::Request>();
+        request->pnc_map = pnc_map_;
+        request->global_planner_type =process_config_->global_path().type_;
+
+        //获取响应
+        auto result_future = global_path_client_->async_send_request(request);
+
+        // 判断响应是否成功
+        if(rclcpp::spin_until_future_complete(this->get_node_base_interface(), result_future) == rclcpp::FutureReturnCode::SUCCESS)
+        {
+            RCLCPP_INFO(this->get_logger(),"global_path response sucess");
+            global_path_ = result_future.get()->global_path;//获取响应中的pnc_map
+            return true;
+        }
+        else
+        {
+            RCLCPP_ERROR(this->get_logger(),"Global path response failed!");
+            return false;
+        }
     }
+
 
 
 

@@ -21,6 +21,7 @@
 #include <cmath>
 #include <algorithm>
 
+#include <type_traits>
 
 
 namespace Planning
@@ -62,7 +63,33 @@ namespace Planning
   template <typename T>
   inline bool PlanningProcess::connect_server(const T &client)
   {
-      return false;
+      //判断客户类型
+      std::string server_name;
+      if constexpr (std::is_same_v<T, rclcpp::Client<PNCMapService>::SharedPtr>)
+      {
+          server_name = "pnc_map";
+      }
+      else if constexpr (std::is_same_v<T, rclcpp::Client<GlobalPathService>::SharedPtr>)
+      {
+          server_name = "global_path";
+      }
+      else
+      {
+          RCLCPP_ERROR(this->get_logger(), "wrong client type!");
+          return false; 
+      }
+      
+      //等待服务器
+      while (!client->wait_for_service(1s)) {
+          if (!rclcpp::ok()) //对ctrl+c操作处理 防止进入死循环
+          {
+              RCLCPP_ERROR(this->get_logger(), "Interruped while waiting for the %s server.", server_name.c_str());
+              return false;
+          }
+          RCLCPP_INFO(this->get_logger(), "%s server not available, waiting again...", server_name.c_str());
+      }
+
+      return true;
   }
 } // namespace
 #endif  //PLANNING_PROCESS_H_
