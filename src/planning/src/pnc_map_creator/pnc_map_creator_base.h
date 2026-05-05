@@ -6,6 +6,7 @@
 #include "geometry_msgs/msg/point.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
+#include <cmath>
 #include "config_reader.h"
 
 namespace Planning
